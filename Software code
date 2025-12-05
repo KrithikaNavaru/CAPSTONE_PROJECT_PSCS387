@@ -1,0 +1,22 @@
+byte pollCommand[] = {  
+0x01, 0x03, 0x00, 0x00, 0x00, 0x03, 0x05, 0xCB  
+}; 
+
+void initialize(){ 
+Initialize serial communication at a baud rate of 9600.Serial.println("Initializing NPK Sensor..."); 
+
+void loop() { executePollFrame(); pause(300); 
+
+if(receivedResponse()) { if (validateCRC(responseData)) { retrieveValues(); 
+
+executeFilter(); invokeDisplayNPK(); 
+Otherwise, 
+Serial.println("CRC Error - Retrying"); 
+
+void transmitPollFrame(){ 
+for(int i=0; i<sizeof(pollCommand); i++){Serial.write(pollCommand[i]);  
+
+void extractValues() { 
+Nitrogen = (responseData[3] << 8 | responseData[4]); 
+Phosphorus = (responseData[5] << 8 | responseData[6]); 
+Potassium = (responseData[7] << 8 | responseData[8]); 
