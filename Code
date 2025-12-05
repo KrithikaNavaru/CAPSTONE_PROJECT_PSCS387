@@ -1,0 +1,45 @@
+#include <SoftwareSerial.h> 
+
+// RS485 Serial 
+SoftwareSerial rs485Serial(2, 3);   // RX=D2, TX=D3 
+
+// ESP8266 Serial 
+SoftwareSerial espSerial(10, 11);   // RX=D10 (from ESP TX), TX=D11 (to ESP RX) 
+
+#define RE_DE 4   // RS485 RE+DE control pin 
+
+// Modbus request frame for NPK sensor 
+byte requestFrame[] = {0x01, 0x03, 0x00, 0x1E, 0x00, 0x03, 0xE4, 0x0C}; 
+void setup() {   Serial.begin(9600);   rs485Serial.begin(9600);   espSerial.begin(9600); 
+pinMode(RE_DE, OUTPUT);   digitalWrite(RE_DE, LOW); // receive mode 
+
+delay(2000); 
+Serial.println("System Started... Reading NPK Sensor"); 
+} 
+
+void loop() { 
+  // SEND request to the sensor   digitalWrite(RE_DE, HIGH); // TX mode   delay(5); 
+  rs485Serial.write(requestFrame, sizeof(requestFrame));   delay(10); 
+   
+  digitalWrite(RE_DE, LOW); // back to RX mode 
+
+  delay(100); 
+
+  // READ response (expected 11 bytes)   byte response[11];   int len = 0; 
+
+  while (rs485Serial.available() && len < 11) {     response[len++] = rs485Serial.read(); 
+  } 
+
+  if (len == 11) {     int nitrogen     = response[5];     int phosphorus   = response[7];     int potassium    = response[9]; 
+
+    Serial.print("N: "); 
+    Serial.print(nitrogen); 
+    Serial.print(" mg/kg, P: "); 
+    Serial.print(phosphorus); 
+    Serial.print(" mg/kg, K: "); 
+    Serial.println(potassium); 
+
+    // SEND to ESP8266     espSerial.print("N=");     espSerial.print(nitrogen);     espSerial.print(", P=");     espSerial.print(phosphorus);     espSerial.print(", K=");     espSerial.println(potassium); 
+  } 
+ delay(2000); 
+} 
